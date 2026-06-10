@@ -2,17 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"/>
-<title>Dept. of Computing & Informatics – </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dept. of Computing & Informatics | Environmental Monitor</title>
 
 <!-- Firebase & Chart.js -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-<!-- Fonts & Styles -->
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<!-- Fonts: Clean, modern sans-serif + monospace for data -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Source+CodePro:wght@400;500&display=swap" rel="stylesheet"/>
 
 <style>
   * {
@@ -22,31 +21,32 @@
   }
 
   :root {
-    --bg:          #0b0f1a;
-    --surface:     #111827;
-    --border:      #1e2d45;
-    --accent-t:    #38bdf8;
-    --accent-h:    #34d399;
-    --accent-u:    #a78bfa;
-    --text:        #e2e8f0;
-    --text-dim:    #94a3b8;
-    --muted:       #64748b;
-    --danger:      #f87171;
-    --on-glow:     #facc15;
-    --card-shadow: 0 8px 20px rgba(0,0,0,0.3);
-    --mono:        'JetBrains Mono', monospace;
-    --sans:        'Space Grotesk', sans-serif;
+    --bg:           #f4f7fc;
+    --surface:      #ffffff;
+    --border-light: #e2e8f0;
+    --border-med:   #cbd5e1;
+    --accent-temp:  #dc2626;
+    --accent-hum:   #0284c7;
+    --accent-avg:   #4f46e5;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted:   #64748b;
+    --bulb-on-bg:   #fef3c7;
+    --bulb-off-bg:  #f1f5f9;
+    --shadow-sm:    0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+    --shadow-md:    0 4px 6px -1px rgba(0,0,0,0.05);
+    --mono:         'Source Code Pro', monospace;
+    --sans:         'Inter', system-ui, -apple-system, sans-serif;
   }
 
   body {
     font-family: var(--sans);
     background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
+    color: var(--text-primary);
+    line-height: 1.5;
   }
 
-  /* === SPLASH SCREEN === */
+  /* --- splash screen (minimal, static) --- */
   #splash {
     position: fixed;
     inset: 0;
@@ -56,8 +56,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2rem;
-    transition: opacity 0.6s ease, visibility 0.6s ease;
+    gap: 1.5rem;
+    transition: opacity 0.2s linear, visibility 0.2s linear;
   }
   #splash.hidden {
     opacity: 0;
@@ -65,248 +65,304 @@
     pointer-events: none;
   }
   .splash-logo {
-    width: 90px;
-    height: 90px;
-    border: 3px solid var(--accent-u);
-    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    background: #e0e7ff;
+    border-radius: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.4rem;
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%,100% { box-shadow: 0 0 0 0 rgba(167,139,250,0.5); }
-    50%      { box-shadow: 0 0 0 20px rgba(167,139,250,0); }
+    font-size: 2rem;
+    color: #4f46e5;
   }
   .splash-dept {
     text-align: center;
-    line-height: 1.4;
   }
   .splash-dept .welcome {
     font-size: 0.8rem;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 0.5rem;
-    display: block;
+    color: var(--text-muted);
+    font-weight: 500;
   }
   .splash-dept h1 {
-    font-size: clamp(1.3rem, 5vw, 2rem);
+    font-size: clamp(1.5rem, 6vw, 2.2rem);
     font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #0f172a;
   }
   .splash-dept h1 em {
     font-style: normal;
-    color: var(--accent-u);
+    color: #4f46e5;
+  }
+  .splash-sub {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
   }
   .enter-btn {
-    margin-top: 1rem;
-    padding: 0.85rem 2.8rem;
-    border: 2px solid var(--accent-u);
-    border-radius: 60px;
-    background: transparent;
-    color: var(--accent-u);
-    font-weight: 700;
-    font-size: 1rem;
-    letter-spacing: 0.1em;
+    margin-top: 0.5rem;
+    background: #1e293b;
+    color: white;
+    border: none;
+    padding: 0.7rem 2rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    border-radius: 40px;
     cursor: pointer;
-    transition: all 0.2s;
+    font-family: var(--sans);
+    transition: background 0.1s ease;
   }
   .enter-btn:hover {
-    background: var(--accent-u);
-    color: var(--bg);
+    background: #0f172a;
   }
 
-  /* === HEADER & NAVIGATION === */
+  /* header & navigation */
   header {
-    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-light);
     padding: 1rem 2rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 1rem;
-    background: var(--surface)/* subtle depth */;
+    box-shadow: var(--shadow-sm);
   }
   .logo-area h3 {
     font-size: 1rem;
     font-weight: 600;
-    color: var(--accent-u);
-    letter-spacing: 0.05em;
+    color: #1e293b;
+    letter-spacing: -0.2px;
   }
   .logo-area p {
     font-size: 0.7rem;
-    color: var(--muted);
+    color: var(--text-muted);
   }
   .nav-tabs {
     display: flex;
     gap: 0.25rem;
-    background: rgba(0,0,0,0.3);
-    border-radius: 48px;
+    background: var(--bg);
     padding: 0.25rem;
+    border-radius: 48px;
   }
   .tab-btn {
     background: transparent;
     border: none;
-    padding: 0.5rem 1.5rem;
+    padding: 0.5rem 1.4rem;
     font-family: var(--sans);
-    font-weight: 600;
+    font-weight: 500;
     font-size: 0.85rem;
     border-radius: 40px;
-    color: var(--text-dim);
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.1s;
   }
   .tab-btn.active {
-    background: var(--accent-u);
-    color: #0b0f1a;
-    box-shadow: 0 2px 8px rgba(167,139,250,0.3);
+    background: #ffffff;
+    color: #4f46e5;
+    box-shadow: var(--shadow-sm);
+    font-weight: 600;
   }
   .status-pill {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.5rem;
     font-size: 0.75rem;
     font-family: var(--mono);
-    background: rgba(0,0,0,0.4);
-    padding: 0.3rem 0.9rem;
+    background: #f1f5f9;
+    padding: 0.3rem 1rem;
     border-radius: 40px;
+    color: var(--text-secondary);
   }
   .dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--danger);
-    transition: background 0.2s;
+    background: #ef4444;
   }
   .dot.live {
-    background: #34d399;
-    box-shadow: 0 0 8px #34d399;
+    background: #10b981;
   }
 
-  /* === MAIN PAGE CONTAINER === */
+  /* page container */
   .page {
     display: none;
-    max-width: 1300px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
-    animation: fade 0.25s ease;
   }
   .page.active-page {
     display: block;
   }
-  @keyframes fade {
-    from { opacity: 0; transform: translateY(6px);}
-    to   { opacity: 1; transform: translateY(0);}
-  }
 
-  /* CARDS & BULB SECTION (reused) */
+  /* cards grid */
   .cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
   }
   .card {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-light);
     border-radius: 20px;
-    padding: 1.8rem;
-    position: relative;
-    transition: transform 0.2s;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
   }
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    border-radius: 20px 20px 0 0;
-  }
-  .card.temp::before { background: var(--accent-t); }
-  .card.hum::before  { background: var(--accent-h); }
-  .card.time::before { background: var(--accent-u); }
   .card-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    font-weight: 600;
     text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 1rem;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin-bottom: 0.8rem;
   }
   .card-value {
     font-family: var(--mono);
-    font-size: 3rem;
+    font-size: 2.8rem;
     font-weight: 600;
-    line-height: 1;
+    line-height: 1.2;
+    letter-spacing: -1px;
   }
-  .card.temp .card-value { color: var(--accent-t); }
-  .card.hum .card-value  { color: var(--accent-h); }
-  .card.time .card-value { color: var(--accent-u); font-size: 1.5rem; }
+  .card.temp .card-value { color: var(--accent-temp); }
+  .card.hum .card-value  { color: var(--accent-hum); }
+  .card.avg-temp .card-value { color: var(--accent-avg); }
+  .card.avg-hum .card-value  { color: var(--accent-avg); }
+  .card-unit {
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
   .card-updated {
-    margin-top: 1rem;
+    margin-top: 0.75rem;
     font-size: 0.7rem;
     font-family: var(--mono);
-    color: var(--muted);
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-light);
+    padding-top: 0.7rem;
   }
 
-  /* BULB SECTION (shared) */
+  /* avg summary row */
+  .avg-summary {
+    background: #f8fafc;
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .avg-stats {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+  .avg-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .avg-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .avg-value {
+    font-family: var(--mono);
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #4f46e5;
+  }
+  .avg-note {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    background: #eef2ff;
+    padding: 0.3rem 0.8rem;
+    border-radius: 40px;
+  }
+
+  /* bulb section (clean) */
   .bulb-section {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-light);
     border-radius: 20px;
-    padding: 1.75rem;
+    padding: 1.4rem 1.8rem;
     margin-bottom: 2rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 1.2rem;
+    gap: 1rem;
+    box-shadow: var(--shadow-sm);
   }
-  .bulb-info { display: flex; align-items: center; gap: 1.2rem; }
+  .bulb-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
   .bulb-icon {
-    font-size: 3rem;
-    transition: all 0.2s;
-    filter: grayscale(0.7) brightness(0.6);
+    font-size: 2.2rem;
+    line-height: 1;
+    color: #f59e0b;
+    filter: none;
   }
-  .bulb-icon.on {
-    filter: drop-shadow(0 0 12px var(--on-glow));
-    transform: scale(1.05);
-    filter: brightness(1) drop-shadow(0 0 8px #facc15);
+  .bulb-label h3 {
+    font-size: 1rem;
+    font-weight: 600;
   }
-  .bulb-label h3 { font-size: 1rem; font-weight: 600; }
-  .bulb-label p { font-size: 0.8rem; font-family: var(--mono); margin-top: 0.2rem; }
-  .state-on { color: var(--on-glow); font-weight: bold; }
-  .state-off { color: var(--muted); }
+  .bulb-label p {
+    font-size: 0.75rem;
+    font-family: var(--mono);
+    color: var(--text-secondary);
+  }
+  .state-on {
+    color: #b45309;
+    font-weight: 600;
+  }
+  .state-off {
+    color: var(--text-muted);
+  }
   .bulb-toggle {
     position: relative;
-    width: 64px;
-    height: 34px;
+    width: 56px;
+    height: 30px;
     cursor: pointer;
   }
-  .bulb-toggle input { opacity: 0; width: 0; height: 0; }
+  .bulb-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
   .toggle-track {
     position: absolute;
     inset: 0;
-    background: var(--border);
-    border-radius: 34px;
-    transition: 0.2s;
+    background: #cbd5e1;
+    border-radius: 30px;
+    transition: background 0.1s;
   }
   .toggle-track::after {
     content: '';
     position: absolute;
-    left: 4px;
-    top: 4px;
-    width: 26px;
-    height: 26px;
-    background: #94a3b8;
+    left: 3px;
+    top: 3px;
+    width: 24px;
+    height: 24px;
+    background: white;
     border-radius: 50%;
-    transition: transform 0.2s;
+    transition: transform 0.1s;
   }
-  .bulb-toggle input:checked + .toggle-track { background: var(--on-glow); }
-  .bulb-toggle input:checked + .toggle-track::after { transform: translateX(30px); background: white; }
+  .bulb-toggle input:checked + .toggle-track {
+    background: #f59e0b;
+  }
+  .bulb-toggle input:checked + .toggle-track::after {
+    transform: translateX(26px);
+  }
 
-  /* CHARTS & TABLE */
+  /* charts grid */
   .charts {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
@@ -314,37 +370,32 @@
   }
   .chart-card {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-light);
     border-radius: 20px;
-    padding: 1.5rem;
+    padding: 1.2rem;
+    box-shadow: var(--shadow-sm);
   }
   .chart-title {
     font-size: 0.75rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--muted);
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
     margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
   }
-  .dot-sm {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+  canvas {
+    max-height: 220px;
+    width: 100% !important;
   }
-  .temp-title .dot-sm { background: var(--accent-t); }
-  .hum-title .dot-sm  { background: var(--accent-h); }
-  canvas { max-height: 240px; width: 100% !important; }
 
-  /* TABLE FOR GENERAL READINGS PAGE */
+  /* readings table */
   .readings-table-container {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-light);
     border-radius: 20px;
-    padding: 0;
     overflow-x: auto;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
   }
   .readings-table {
     width: 100%;
@@ -355,142 +406,153 @@
   .readings-table th {
     text-align: left;
     padding: 1rem 1.2rem;
-    background: rgba(0,0,0,0.3);
-    color: var(--accent-u);
+    background: #f8fafc;
+    color: var(--text-primary);
     font-weight: 600;
-    letter-spacing: 0.05em;
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    border-bottom: 1px solid var(--border-light);
   }
   .readings-table td {
-    padding: 0.85rem 1.2rem;
-    border-bottom: 1px solid var(--border);
-    color: var(--text-dim);
+    padding: 0.8rem 1.2rem;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-secondary);
   }
-  .readings-table tr:last-child td { border-bottom: none; }
   .table-caption {
     padding: 0.8rem 1.2rem;
-    color: var(--muted);
     font-size: 0.7rem;
+    color: var(--text-muted);
     text-align: right;
-    border-top: 1px solid var(--border);
+    background: #fefefe;
   }
 
   footer {
     text-align: center;
-    padding: 2rem;
+    padding: 1.8rem;
     font-size: 0.7rem;
-    color: var(--muted);
-    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-light);
     margin-top: 2rem;
   }
 
-  @media (max-width: 680px) {
+  @media (max-width: 700px) {
     header { flex-direction: column; align-items: stretch; }
     .nav-tabs { justify-content: center; }
-    .page { padding: 1.2rem; }
+    .page { padding: 1rem; }
+    .avg-stats { gap: 1rem; }
+    .avg-value { font-size: 1.2rem; }
   }
 </style>
 </head>
 <body>
 
-<!-- SPLASH INTRO -->
 <div id="splash">
   <div class="splash-logo">📡</div>
   <div class="splash-dept">
     <span class="welcome">Department of</span>
-    <h1>Computing &amp; <em>Informatics</em></h1>
+    <h1>Computing & <em>Informatics</em></h1>
   </div>
-  <p class="splash-sub">Environmental Intelligence Hub · IoT Lab</p>
-  <button class="enter-btn" onclick="enterDashboard()">Explore Dashboard →</button>
+  <p class="splash-sub">Sensor Intelligence · 4h Trend Analysis</p>
+  <button class="enter-btn" onclick="enterDashboard()">Access Monitor →</button>
 </div>
 
-<!-- MAIN UI AFTER SPLASH -->
 <header>
   <div class="logo-area">
-    <h3>📊 DCI · SENSOR LAB</h3>
-    <p>real‑time ·</p>
+    <h3>DCI | Environmental Core</h3>
+    <p>Real‑time metrics & rolling averages</p>
   </div>
   <div class="nav-tabs">
-    <button class="tab-btn active" data-page="dashboard"> Live Dashboard</button>
-    <button class="tab-btn" data-page="readings"> General Readings</button>
-    <button class="tab-btn" data-page="bulb"> Bulb Control</button>
+    <button class="tab-btn active" data-page="dashboard">Live Metrics</button>
+    <button class="tab-btn" data-page="readings">History Log</button>
+    <button class="tab-btn" data-page="bulb">Actuator</button>
   </div>
   <div class="status-pill">
     <div class="dot" id="statusDot"></div>
-    <span id="statusText">connecting...</span>
+    <span id="statusText">connecting</span>
   </div>
 </header>
 
-<!-- PAGE 1: LIVE DASHBOARD (cards + charts) -->
+<!-- PAGE 1: DASHBOARD with 4h avg -->
 <div id="dashboard-page" class="page active-page">
   <div class="cards">
     <div class="card temp">
-      <div class="card-label">🌡️ Temperature</div>
+      <div class="card-label">Temperature (instant)</div>
       <div class="card-value" id="tempVal">--<span class="card-unit">°C</span></div>
-      <div class="card-updated" id="tempTime">Last sample: —</div>
+      <div class="card-updated" id="tempTime">last reading: —</div>
     </div>
     <div class="card hum">
-      <div class="card-label">💧 Humidity</div>
+      <div class="card-label">Humidity (instant)</div>
       <div class="card-value" id="humVal">--<span class="card-unit">%</span></div>
-      <div class="card-updated" id="humTime">Last sample: —</div>
+      <div class="card-updated" id="humTime">last reading: —</div>
     </div>
-    <div class="card time">
-      <div class="card-label">⏱️ Device Timestamp</div>
-      <div class="card-value" id="dtVal">—</div>
-      <div class="card-updated">from ESP32 RTC</div>
+    <div class="card avg-temp">
+      <div class="card-label">Average Temperature</div>
+      <div class="card-value" id="avgTempVal">--<span class="card-unit">°C</span></div>
+      <div class="card-updated">over last 4 hours</div>
+    </div>
+    <div class="card avg-hum">
+      <div class="card-label">Average Humidity</div>
+      <div class="card-value" id="avgHumVal">--<span class="card-unit">%</span></div>
+      <div class="card-updated">over last 4 hours</div>
     </div>
   </div>
-  
-  <!-- Quick bulb preview (mirror state) but full control on dedicated page -->
-  <div class="bulb-section" style="background: #0f1420;">
+
+  <!-- compact avg summary bar -->
+  <div class="avg-summary">
+    <div class="avg-stats">
+      <div class="avg-item"><span class="avg-label">4h Avg Temp</span><span class="avg-value" id="avgTempBar">—</span><span>°C</span></div>
+      <div class="avg-item"><span class="avg-label">4h Avg Humidity</span><span class="avg-value" id="avgHumBar">—</span><span>%</span></div>
+    </div>
+    <div class="avg-note">⏱️ sliding window (last 4 hours) • samples from device timestamps</div>
+  </div>
+
+  <!-- bulb preview -->
+  <div class="bulb-section">
     <div class="bulb-info">
       <div class="bulb-icon" id="previewBulbIcon">💡</div>
       <div class="bulb-label">
-        <h3>Lab Lighting</h3>
-        <p>Current: <span id="previewBulbState" class="state-off">OFF</span></p>
+        <h3>Lab Illumination</h3>
+        <p>Current: <span id="previewBulbState" class="state-off">OFF</span> · sync via Firebase</p>
       </div>
     </div>
-    <div style="font-size:0.8rem; color:var(--muted);">⚡ Full control in "Bulb Control" page</div>
+    <div style="font-size:0.75rem; color:#475569;">Actuator panel → "Actuator" tab</div>
   </div>
 
   <div class="charts">
     <div class="chart-card">
-      <div class="chart-title temp-title"><span class="dot-sm"></span> Temperature trend (last 30)</div>
-      <canvas id="tempChart" height="200"></canvas>
+      <div class="chart-title">Temperature history (last 30 points)</div>
+      <canvas id="tempChart"></canvas>
     </div>
     <div class="chart-card">
-      <div class="chart-title hum-title"><span class="dot-sm"></span> Humidity trend (last 30)</div>
-      <canvas id="humChart" height="200"></canvas>
+      <div class="chart-title">Humidity history (last 30 points)</div>
+      <canvas id="humChart"></canvas>
     </div>
   </div>
 </div>
 
-<!-- PAGE 2: GENERAL READINGS (tabular history) -->
+<!-- PAGE 2: GENERAL READINGS TABLE -->
 <div id="readings-page" class="page">
   <div class="readings-table-container">
-    <table class="readings-table" id="readingsTable">
-      <thead>
-        <tr><th>Timestamp (RTC)</th><th>🌡️ Temp (°C)</th><th>💧 Humidity (%)</th><th>Recorded (local time)</th></tr>
-      </thead>
-      <tbody id="readingsTableBody">
-        <tr><td colspan="4" style="text-align:center;">Loading historical snapshots...</td></tr>
-      </tbody>
+    <table class="readings-table">
+      <thead><tr><th>Device Timestamp</th><th>Temperature (°C)</th><th>Humidity (%)</th><th>Received (Local)</th></tr></thead>
+      <tbody id="readingsTableBody"><tr><td colspan="4" style="text-align:center;">awaiting sensor data</td></tr></tbody>
     </table>
-    <div class="table-caption">📌 Stores last 20 environment snapshots from Firebase</div>
+    <div class="table-caption">last 20 records from Firebase (sensors/environment)</div>
   </div>
-  <div style="background: var(--surface); border-radius: 20px; padding: 1.2rem; border:1px solid var(--border);">
-    <p style="font-size:0.75rem; color:var(--muted); display:flex; gap:0.5rem; align-items:center;">📡 <span>General readings are automatically updated when new sensor data arrives. Each entry reflects the device timestamp and values.</span></p>
+  <div style="background:#f9f9fb; border-radius: 18px; padding:1rem; border:1px solid var(--border-light);">
+    <p style="font-size:0.75rem; color:#334155;">📋 Each row corresponds to a sensor transmission. 4‑hour average calculations use timestamps from the device datetime field.</p>
   </div>
 </div>
 
-<!-- PAGE 3: BULB CONTROL (dedicated interface) -->
+<!-- PAGE 3: BULB CONTROL -->
 <div id="bulb-page" class="page">
-  <div class="bulb-section" style="background: var(--surface); margin-bottom: 1.5rem;">
+  <div class="bulb-section" style="margin-bottom: 1.5rem;">
     <div class="bulb-info">
       <div class="bulb-icon" id="dedicatedBulbIcon">💡</div>
       <div class="bulb-label">
-        <h3>🔌 Laboratory Bulb Actuator</h3>
+        <h3>ESP32 Actuator · Light control</h3>
         <p>State: <span id="dedicatedBulbText" class="state-off">OFF</span></p>
-        <p style="font-size:0.65rem;">Firebase realtime control / ESP32 sync</p>
+        <p style="font-size:0.65rem;">database path /bulb_state</p>
       </div>
     </div>
     <label class="bulb-toggle">
@@ -498,18 +560,16 @@
       <span class="toggle-track"></span>
     </label>
   </div>
-  <div style="background: #111827; border-radius: 20px; border: 1px solid var(--border); padding: 1.5rem;">
-    <h4 style="font-weight: 500; margin-bottom: 0.75rem;"> Remote control instructions</h4>
-    <p style="font-size:0.85rem; color: var(--text-dim);">Toggle the switch → updates <code style="background:#00000044; padding:0.2rem 0.4rem; border-radius:6px;"></code> .</p>
+  <div style="background:#f8fafc; border-radius: 18px; border:1px solid var(--border-light); padding: 1.2rem;">
+    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">Remote actuator instructions</h4>
+    <p style="font-size:0.85rem; color: #334155;">Toggle the switch → updates Firebase realtime DB. ESP32 listens to changes and controls physical bulb. State synchronizes across dashboard.</p>
   </div>
 </div>
 
-<footer>
-  Department of Computing and Informatics · Live Sensor Network · Firebase Realtime Sync
-</footer>
+<footer>Department of Computing and Informatics · Live Sensor Network · 4‑hour rolling averages</footer>
 
 <script>
-  // ---------- FIREBASE INIT ----------
+  // FIREBASE INIT
   firebase.initializeApp({
     apiKey:      "AIzaSyAn2n5bXJtTAQ283hMxOiR-mwl8DmXYLxY",
     databaseURL: "https://class-app-a0548-default-rtdb.firebaseio.com/",
@@ -519,26 +579,27 @@
 
   // ---------- GLOBALS ----------
   let tempChart, humChart;
-  let readingsHistory = [];   // store max 20 entries {datetime, temp, hum, localTime}
-  let lastBulbSyncFlag = false;   // avoid feedback loops
+  let sensorHistory = [];       // stores {timestampMs, datetimeStr, temp, hum, epochRecv}
+  let bulbSyncFlag = false;
+  const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
-  // ---------- CHART SETUP ----------
+  // ---------- CHART INIT ----------
   function initCharts() {
-    const ctxTemp = document.getElementById('tempChart').getContext('2d');
-    const ctxHum  = document.getElementById('humChart').getContext('2d');
-    tempChart = new Chart(ctxTemp, {
+    const tempCtx = document.getElementById('tempChart').getContext('2d');
+    const humCtx = document.getElementById('humChart').getContext('2d');
+    tempChart = new Chart(tempCtx, {
       type: 'line',
-      data: { labels: [], datasets: [{ label: '°C', data: [], borderColor: '#38bdf8', backgroundColor: '#38bdf815', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#38bdf8', tension: 0.3, fill: true }] },
-      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: '#1e2d45' } }, y: { ticks: { color: '#64748b' }, grid: { color: '#1e2d45' } } } }
+      data: { labels: [], datasets: [{ label: '°C', data: [], borderColor: '#dc2626', backgroundColor: '#dc262610', borderWidth: 2, pointRadius: 2.5, pointBackgroundColor: '#dc2626', tension: 0.2, fill: true }] },
+      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { ticks: { font: { size: 9 } } } } }
     });
-    humChart = new Chart(ctxHum, {
+    humChart = new Chart(humCtx, {
       type: 'line',
-      data: { labels: [], datasets: [{ label: '%', data: [], borderColor: '#34d399', backgroundColor: '#34d39915', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#34d399', tension: 0.3, fill: true }] },
-      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: '#1e2d45' } }, y: { ticks: { color: '#64748b' }, grid: { color: '#1e2d45' } } } }
+      data: { labels: [], datasets: [{ label: '%', data: [], borderColor: '#0284c7', backgroundColor: '#0284c710', borderWidth: 2, pointRadius: 2.5, pointBackgroundColor: '#0284c7', tension: 0.2, fill: true }] },
+      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { ticks: { font: { size: 9 } } } } }
     });
   }
 
-  function addChartPoint(chart, label, value, maxPoints = 30) {
+  function addChartPoint(chart, label, value, maxPoints=30) {
     chart.data.labels.push(label);
     chart.data.datasets[0].data.push(value);
     if (chart.data.labels.length > maxPoints) {
@@ -548,171 +609,217 @@
     chart.update('none');
   }
 
-  // ---------- UPDATE UI (temp/humidity cards + chart + table) ----------
-  function updateSensorUI(data, localTimestampStr) {
-    if (!data) return;
-    const temp = parseFloat(data.temperature).toFixed(1);
-    const hum  = parseFloat(data.humidity).toFixed(0);
-    const dtRaw = data.datetime || '–';
-    const timeLabel = (dtRaw !== '–' && dtRaw.includes(' ')) ? dtRaw.split(' ')[1].substring(0,5) : new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-    
-    // cards
-    document.getElementById('tempVal').innerHTML = `${temp}<span class="card-unit">°C</span>`;
-    document.getElementById('humVal').innerHTML  = `${hum}<span class="card-unit">%</span>`;
-    document.getElementById('dtVal').textContent = dtRaw;
-    document.getElementById('tempTime').innerHTML = `Last update: ${localTimestampStr}`;
-    document.getElementById('humTime').innerHTML  = `Last update: ${localTimestampStr}`;
-    
-    // charts
-    addChartPoint(tempChart, timeLabel, parseFloat(temp));
-    addChartPoint(humChart, timeLabel, parseFloat(hum));
-    
-    // store in general readings history (max 20)
-    const record = {
-      datetime: dtRaw,
-      temperature: temp,
-      humidity: hum,
-      localTime: localTimestampStr
+  // parse datetime from device (format: "YYYY-MM-DD HH:MM:SS" or fallback)
+  function parseDeviceTimestamp(dtStr) {
+    if (!dtStr || dtStr === '–') return null;
+    let parsed = Date.parse(dtStr.replace(' ', 'T'));
+    if (isNaN(parsed)) return null;
+    return parsed;
+  }
+
+  // compute 4h rolling averages based on device timestamps
+  function computeRollingAverages() {
+    const nowMs = Date.now();
+    const cutoff = nowMs - FOUR_HOURS_MS;
+    const validEntries = sensorHistory.filter(entry => entry.timestampMs !== null && entry.timestampMs >= cutoff);
+    if (validEntries.length === 0) {
+      return { avgTemp: null, avgHum: null, count: 0 };
+    }
+    let sumTemp = 0, sumHum = 0;
+    for (let e of validEntries) {
+      sumTemp += e.temp;
+      sumHum += e.hum;
+    }
+    return {
+      avgTemp: sumTemp / validEntries.length,
+      avgHum: sumHum / validEntries.length,
+      count: validEntries.length
     };
-    readingsHistory.unshift(record);
-    if (readingsHistory.length > 20) readingsHistory.pop();
+  }
+
+  function updateAverageUI() {
+    const { avgTemp, avgHum, count } = computeRollingAverages();
+    const avgTempEl = document.getElementById('avgTempVal');
+    const avgHumEl = document.getElementById('avgHumVal');
+    const avgTempBar = document.getElementById('avgTempBar');
+    const avgHumBar = document.getElementById('avgHumBar');
+    if (avgTemp !== null) {
+      const tempFixed = avgTemp.toFixed(1);
+      avgTempEl.innerHTML = `${tempFixed}<span class="card-unit">°C</span>`;
+      if (avgTempBar) avgTempBar.innerText = tempFixed;
+    } else {
+      avgTempEl.innerHTML = `--<span class="card-unit">°C</span>`;
+      if (avgTempBar) avgTempBar.innerText = '—';
+    }
+    if (avgHum !== null) {
+      const humFixed = avgHum.toFixed(0);
+      avgHumEl.innerHTML = `${humFixed}<span class="card-unit">%</span>`;
+      if (avgHumBar) avgHumBar.innerText = humFixed;
+    } else {
+      avgHumEl.innerHTML = `--<span class="card-unit">%</span>`;
+      if (avgHumBar) avgHumBar.innerText = '—';
+    }
+    // optional: show note in avg-summary
+    const noteDiv = document.querySelector('.avg-note');
+    if (noteDiv && count !== undefined) {
+      noteDiv.innerHTML = `⏱️ 4h window · ${count} sample${count !== 1 ? 's' : ''} in range`;
+    }
+  }
+
+  // update UI for cards and charts
+  function updateSensorUI(data, localTimeStr) {
+    if (!data) return;
+    const temp = parseFloat(data.temperature);
+    const hum = parseFloat(data.humidity);
+    if (isNaN(temp) || isNaN(hum)) return;
+    const tempFixed = temp.toFixed(1);
+    const humFixed = hum.toFixed(0);
+    const dtRaw = data.datetime || '–';
+    document.getElementById('tempVal').innerHTML = `${tempFixed}<span class="card-unit">°C</span>`;
+    document.getElementById('humVal').innerHTML = `${humFixed}<span class="card-unit">%</span>`;
+    document.getElementById('dtVal') && (document.getElementById('dtVal').textContent = dtRaw);
+    document.getElementById('tempTime').innerHTML = `last update: ${localTimeStr}`;
+    document.getElementById('humTime').innerHTML = `last update: ${localTimeStr}`;
+
+    // time label for charts: extract HH:MM from device datetime or fallback
+    let timeLabel = '';
+    if (dtRaw !== '–' && dtRaw.includes(' ')) {
+      timeLabel = dtRaw.split(' ')[1].substring(0,5);
+    } else {
+      timeLabel = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    }
+    addChartPoint(tempChart, timeLabel, temp);
+    addChartPoint(humChart, timeLabel, hum);
+
+    // store in sensorHistory with parsed timestamp
+    let timestampMs = parseDeviceTimestamp(dtRaw);
+    if (!timestampMs && dtRaw !== '–') {
+      // fallback: use current time as estimate
+      timestampMs = Date.now();
+    } else if (!timestampMs) {
+      timestampMs = null;
+    }
+    sensorHistory.push({
+      timestampMs: timestampMs,
+      datetimeStr: dtRaw,
+      temp: temp,
+      hum: hum,
+      receivedLocal: localTimeStr
+    });
+    // keep last 100 for performance but average computation uses all within 4h
+    if (sensorHistory.length > 150) sensorHistory = sensorHistory.slice(-120);
+    
+    // update readings table
     renderReadingsTable();
+    // recalc & update averages
+    updateAverageUI();
   }
 
   function renderReadingsTable() {
     const tbody = document.getElementById('readingsTableBody');
     if (!tbody) return;
-    if (readingsHistory.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Waiting for sensor data...</td></tr>';
+    if (sensorHistory.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">no sensor data received yet</td></tr>';
       return;
     }
     let html = '';
-    for (let rec of readingsHistory) {
+    // show last 20 most recent entries
+    const recent = [...sensorHistory].reverse().slice(0,20);
+    for (let rec of recent) {
       html += `<tr>
-        <td style="font-family:monospace;">${rec.datetime || '—'}</td>
-        <td>${rec.temperature} °C</td>
-        <td>${rec.humidity} %</td>
-        <td style="font-size:0.75rem;">${rec.localTime}</td>
+        <td style="font-family:monospace;">${rec.datetimeStr || '—'}</td>
+        <td>${rec.temp.toFixed(1)} °C</td>
+        <td>${rec.hum.toFixed(0)} %</td>
+        <td style="font-size:0.75rem;">${rec.receivedLocal}</td>
       </tr>`;
     }
     tbody.innerHTML = html;
   }
 
-  // ---------- BULB UI SYNC (shared across pages) ----------
-  function applyBulbUI(state, origin = 'firebase') {
-    // Update toggle on dedicated bulb page
-    const dedicatedToggle = document.getElementById('dedicatedBulbToggle');
-    if (dedicatedToggle && dedicatedToggle.checked !== state) {
-      if (origin !== 'ui') dedicatedToggle.checked = state;
-    }
-    // update preview icon + text in dashboard
+  // BULB SYNC
+  function applyBulbUI(state) {
     const previewIcon = document.getElementById('previewBulbIcon');
-    const previewStateSpan = document.getElementById('previewBulbState');
+    const previewState = document.getElementById('previewBulbState');
     const dedicatedIcon = document.getElementById('dedicatedBulbIcon');
     const dedicatedText = document.getElementById('dedicatedBulbText');
-    
-    const bulbIcons = [previewIcon, dedicatedIcon];
-    bulbIcons.forEach(icon => {
-      if (icon) {
-        if (state) icon.classList.add('on');
-        else icon.classList.remove('on');
-      }
-    });
-    if (previewStateSpan) {
-      previewStateSpan.textContent = state ? 'ON' : 'OFF';
-      previewStateSpan.className = state ? 'state-on' : 'state-off';
+    const dedicatedToggle = document.getElementById('dedicatedBulbToggle');
+    if (previewIcon) previewIcon.style.opacity = state ? '1' : '0.6';
+    if (previewState) {
+      previewState.textContent = state ? 'ON' : 'OFF';
+      previewState.className = state ? 'state-on' : 'state-off';
     }
     if (dedicatedText) {
       dedicatedText.textContent = state ? 'ON' : 'OFF';
       dedicatedText.className = state ? 'state-on' : 'state-off';
     }
+    if (dedicatedToggle && dedicatedToggle.checked !== state) {
+      dedicatedToggle.checked = state;
+    }
   }
 
-  // function triggered by bulb toggle on dedicated page
   function toggleBulbFromPage(isChecked) {
-    // avoid recursive Firebase event
-    lastBulbSyncFlag = true;
-    applyBulbUI(isChecked, 'ui');
-    db.ref('/bulb_state').set(isChecked).catch(err => console.warn(err));
-    setTimeout(() => { lastBulbSyncFlag = false; }, 200);
+    bulbSyncFlag = true;
+    applyBulbUI(isChecked);
+    db.ref('/bulb_state').set(isChecked).catch(console.warn);
+    setTimeout(() => { bulbSyncFlag = false; }, 200);
   }
 
-  // ---------- FIREBASE LISTENERS ----------
-  let lastUpdateTime = null;
-  
-  // Listener for environment sensor
-  db.ref('/sensors/environment').on('value', (snapshot) => {
-    const envData = snapshot.val();
-    if (!envData) return;
+  // FIREBASE LISTENERS
+  db.ref('/sensors/environment').on('value', (snap) => {
+    const env = snap.val();
+    if (!env) return;
     const nowLocal = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-    updateSensorUI(envData, nowLocal);
-    // update status dot live
+    updateSensorUI(env, nowLocal);
     document.getElementById('statusDot')?.classList.add('live');
-    document.getElementById('statusText') && (document.getElementById('statusText').textContent = 'Live');
+    document.getElementById('statusText') && (document.getElementById('statusText').textContent = 'live');
   }, (err) => {
-    console.error(err);
     document.getElementById('statusDot')?.classList.remove('live');
-    document.getElementById('statusText') && (document.getElementById('statusText').textContent = 'Error');
-  });
-  
-  // Listener for bulb state (syncs both directions)
-  db.ref('/bulb_state').on('value', (snap) => {
-    if (lastBulbSyncFlag) return;
-    const state = snap.val() === true;
-    applyBulbUI(state, 'firebase');
+    document.getElementById('statusText') && (document.getElementById('statusText').textContent = 'error');
   });
 
-  // Optional: sync initial readings also to generate initial table if any old data? but we'll start empty, but also we can load last known from db on startup?
-  // load past record to seed history: fetch last value once for initialization (optional)
+  db.ref('/bulb_state').on('value', (snap) => {
+    if (bulbSyncFlag) return;
+    const state = snap.val() === true;
+    applyBulbUI(state);
+  });
+
+  // load initial data once for seeding history
   db.ref('/sensors/environment').once('value').then(snap => {
-    const d = snap.val();
-    if (d) {
-      const initialTime = new Date().toLocaleTimeString();
-      updateSensorUI(d, initialTime);
+    const initData = snap.val();
+    if (initData) {
+      const localNow = new Date().toLocaleTimeString();
+      updateSensorUI(initData, localNow);
     }
   }).catch(console.warn);
-  
-  // PAGE SWITCHING LOGIC
+
+  // PAGE SWITCHING
   function switchPage(pageId) {
-    document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
     document.getElementById(`${pageId}-page`).classList.add('active-page');
     document.querySelectorAll('.tab-btn').forEach(btn => {
       if (btn.getAttribute('data-page') === pageId) btn.classList.add('active');
       else btn.classList.remove('active');
     });
-    // optional: resize charts after visibility (Chart.js auto resize)
     if (pageId === 'dashboard' && tempChart && humChart) {
       tempChart.resize();
       humChart.resize();
     }
   }
-  
-  // attach tab event listeners
   document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const page = btn.getAttribute('data-page');
-      if (page) switchPage(page);
-    });
+    btn.addEventListener('click', () => switchPage(btn.getAttribute('data-page')));
   });
-  
-  // splash dismissal
+
   function enterDashboard() {
     document.getElementById('splash').classList.add('hidden');
   }
-  
-  // manual call to ensure charts and other references are ready
+
   window.addEventListener('DOMContentLoaded', () => {
     initCharts();
-    // preload any initial bulb style
-    db.ref('/bulb_state').once('value').then(snap => {
-      const initialState = snap.val() === true;
-      applyBulbUI(initialState, 'init');
-    });
-    // force resize to avoid weird canvas
+    db.ref('/bulb_state').once('value').then(snap => applyBulbUI(snap.val() === true));
     setTimeout(() => {
       if (tempChart) tempChart.resize();
       if (humChart) humChart.resize();
-    }, 200);
+    }, 150);
   });
 </script>
 </body>
