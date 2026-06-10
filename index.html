@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"/>
+<title>Dept. of Computing & Informatics – Multi‑Page Dashboard</title>
+
+<!-- Firebase & Chart.js -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Fonts & Styles -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  :root {
+    --bg:          #0b0f1a;
+    --surface:     #111827;
+    --border:      #1e2d45;
+    --accent-t:    #38bdf8;
+    --accent-h:    #34d399;
+    --accent-u:    #a78bfa;
+    --text:        #e2e8f0;
+    --text-dim:    #94a3b8;
+    --muted:       #64748b;
+    --danger:      #f87171;
+    --on-glow:     #facc15;
+    --card-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    --mono:        'JetBrains Mono', monospace;
+    --sans:        'Space Grotesk', sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* === SPLASH SCREEN === */
+  #splash {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+  }
+  #splash.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .splash-logo {
+    width: 90px;
+    height: 90px;
+    border: 3px solid var(--accent-u);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.4rem;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(167,139,250,0.5); }
+    50%      { box-shadow: 0 0 0 20px rgba(167,139,250,0); }
+  }
+  .splash-dept {
+    text-align: center;
+    line-height: 1.4;
+  }
+  .splash-dept .welcome {
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  .splash-dept h1 {
+    font-size: clamp(1.3rem, 5vw, 2rem);
+    font-weight: 700;
+  }
+  .splash-dept h1 em {
+    font-style: normal;
+    color: var(--accent-u);
+  }
+  .enter-btn {
+    margin-top: 1rem;
+    padding: 0.85rem 2.8rem;
+    border: 2px solid var(--accent-u);
+    border-radius: 60px;
+    background: transparent;
+    color: var(--accent-u);
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .enter-btn:hover {
+    background: var(--accent-u);
+    color: var(--bg);
+  }
+
+  /* === HEADER & NAVIGATION === */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background: var(--surface)/* subtle depth */;
+  }
+  .logo-area h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-u);
+    letter-spacing: 0.05em;
+  }
+  .logo-area p {
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+  .nav-tabs {
+    display: flex;
+    gap: 0.25rem;
+    background: rgba(0,0,0,0.3);
+    border-radius: 48px;
+    padding: 0.25rem;
+  }
+  .tab-btn {
+    background: transparent;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-radius: 40px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: var(--accent-u);
+    color: #0b0f1a;
+    box-shadow: 0 2px 8px rgba(167,139,250,0.3);
+  }
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.75rem;
+    font-family: var(--mono);
+    background: rgba(0,0,0,0.4);
+    padding: 0.3rem 0.9rem;
+    border-radius: 40px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+    transition: background 0.2s;
+  }
+  .dot.live {
+    background: #34d399;
+    box-shadow: 0 0 8px #34d399;
+  }
+
+  /* === MAIN PAGE CONTAINER === */
+  .page {
+    display: none;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 2rem;
+    animation: fade 0.25s ease;
+  }
+  .page.active-page {
+    display: block;
+  }
+  @keyframes fade {
+    from { opacity: 0; transform: translateY(6px);}
+    to   { opacity: 1; transform: translateY(0);}
+  }
+
+  /* CARDS & BULB SECTION (reused) */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.8rem;
+    position: relative;
+    transition: transform 0.2s;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 20px 20px 0 0;
+  }
+  .card.temp::before { background: var(--accent-t); }
+  .card.hum::before  { background: var(--accent-h); }
+  .card.time::before { background: var(--accent-u); }
+  .card-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .card-value {
+    font-family: var(--mono);
+    font-size: 3rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .card.temp .card-value { color: var(--accent-t); }
+  .card.hum .card-value  { color: var(--accent-h); }
+  .card.time .card-value { color: var(--accent-u); font-size: 1.5rem; }
+  .card-updated {
+    margin-top: 1rem;
+    font-size: 0.7rem;
+    font-family: var(--mono);
+    color: var(--muted);
+  }
+
+  /* BULB SECTION (shared) */
+  .bulb-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+  }
+  .bulb-info { display: flex; align-items: center; gap: 1.2rem; }
+  .bulb-icon {
+    font-size: 3rem;
+    transition: all 0.2s;
+    filter: grayscale(0.7) brightness(0.6);
+  }
+  .bulb-icon.on {
+    filter: drop-shadow(0 0 12px var(--on-glow));
+    transform: scale(1.05);
+    filter: brightness(1) drop-shadow(0 0 8px #facc15);
+  }
+  .bulb-label h3 { font-size: 1rem; font-weight: 600; }
+  .bulb-label p { font-size: 0.8rem; font-family: var(--mono); margin-top: 0.2rem; }
+  .state-on { color: var(--on-glow); font-weight: bold; }
+  .state-off { color: var(--muted); }
+  .bulb-toggle {
+    position: relative;
+    width: 64px;
+    height: 34px;
+    cursor: pointer;
+  }
+  .bulb-toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 34px;
+    transition: 0.2s;
+  }
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 26px;
+    height: 26px;
+    background: #94a3b8;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .bulb-toggle input:checked + .toggle-track { background: var(--on-glow); }
+  .bulb-toggle input:checked + .toggle-track::after { transform: translateX(30px); background: white; }
+
+  /* CHARTS & TABLE */
+  .charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 1.8rem;
+  }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.5rem;
+  }
+  .chart-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot-sm {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .temp-title .dot-sm { background: var(--accent-t); }
+  .hum-title .dot-sm  { background: var(--accent-h); }
+  canvas { max-height: 240px; width: 100% !important; }
+
+  /* TABLE FOR GENERAL READINGS PAGE */
+  .readings-table-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0;
+    overflow-x: auto;
+    margin-bottom: 2rem;
+  }
+  .readings-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+  }
+  .readings-table th {
+    text-align: left;
+    padding: 1rem 1.2rem;
+    background: rgba(0,0,0,0.3);
+    color: var(--accent-u);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .readings-table td {
+    padding: 0.85rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  .readings-table tr:last-child td { border-bottom: none; }
+  .table-caption {
+    padding: 0.8rem 1.2rem;
+    color: var(--muted);
+    font-size: 0.7rem;
+    text-align: right;
+    border-top: 1px solid var(--border);
+  }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+
+  @media (max-width: 680px) {
+    header { flex-direction: column; align-items: stretch; }
+    .nav-tabs { justify-content: center; }
+    .page { padding: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SPLASH INTRO -->
+<div id="splash">
+  <div class="splash-logo">📡</div>
+  <div class="splash-dept">
+    <span class="welcome">Department of</span>
+    <h1>Computing &amp; <em>Informatics</em></h1>
+  </div>
+  <p class="splash-sub">Environmental Intelligence Hub · IoT Lab</p>
+  <button class="enter-btn" onclick="enterDashboard()">Explore Dashboard →</button>
+</div>
+
+<!-- MAIN UI AFTER SPLASH -->
+<header>
+  <div class="logo-area">
+    <h3>📊 DCI · SENSOR LAB</h3>
+    <p>real‑time · multi‑page core</p>
+  </div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" data-page="dashboard">📈 Live Dashboard</button>
+    <button class="tab-btn" data-page="readings">📋 General Readings</button>
+    <button class="tab-btn" data-page="bulb">💡 Bulb Control</button>
+  </div>
+  <div class="status-pill">
+    <div class="dot" id="statusDot"></div>
+    <span id="statusText">connecting...</span>
+  </div>
+</header>
+
+<!-- PAGE 1: LIVE DASHBOARD (cards + charts) -->
+<div id="dashboard-page" class="page active-page">
+  <div class="cards">
+    <div class="card temp">
+      <div class="card-label">🌡️ Temperature</div>
+      <div class="card-value" id="tempVal">--<span class="card-unit">°C</span></div>
+      <div class="card-updated" id="tempTime">Last sample: —</div>
+    </div>
+    <div class="card hum">
+      <div class="card-label">💧 Humidity</div>
+      <div class="card-value" id="humVal">--<span class="card-unit">%</span></div>
+      <div class="card-updated" id="humTime">Last sample: —</div>
+    </div>
+    <div class="card time">
+      <div class="card-label">⏱️ Device Timestamp</div>
+      <div class="card-value" id="dtVal">—</div>
+      <div class="card-updated">from ESP32 RTC</div>
+    </div>
+  </div>
+  
+  <!-- Quick bulb preview (mirror state) but full control on dedicated page -->
+  <div class="bulb-section" style="background: #0f1420;">
+    <div class="bulb-info">
+      <div class="bulb-icon" id="previewBulbIcon">💡</div>
+      <div class="bulb-label">
+        <h3>Lab Lighting</h3>
+        <p>Current: <span id="previewBulbState" class="state-off">OFF</span></p>
+      </div>
+    </div>
+    <div style="font-size:0.8rem; color:var(--muted);">⚡ Full control in "Bulb Control" page</div>
+  </div>
+
+  <div class="charts">
+    <div class="chart-card">
+      <div class="chart-title temp-title"><span class="dot-sm"></span> Temperature trend (last 30)</div>
+      <canvas id="tempChart" height="200"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title hum-title"><span class="dot-sm"></span> Humidity trend (last 30)</div>
+      <canvas id="humChart" height="200"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2: GENERAL READINGS (tabular history) -->
+<div id="readings-page" class="page">
+  <div class="readings-table-container">
+    <table class="readings-table" id="readingsTable">
+      <thead>
+        <tr><th>Timestamp (RTC)</th><th>🌡️ Temp (°C)</th><th>💧 Humidity (%)</th><th>Recorded (local time)</th></tr>
+      </thead>
+      <tbody id="readingsTableBody">
+        <tr><td colspan="4" style="text-align:center;">Loading historical snapshots...</td></tr>
+      </tbody>
+    </table>
+    <div class="table-caption">📌 Stores last 20 environment snapshots from Firebase</div>
+  </div>
+  <div style="background: var(--surface); border-radius: 20px; padding: 1.2rem; border:1px solid var(--border);">
+    <p style="font-size:0.75rem; color:var(--muted); display:flex; gap:0.5rem; align-items:center;">📡 <span>General readings are automatically updated when new sensor data arrives. Each entry reflects the device timestamp and values.</span></p>
+  </div>
+</div>
+
+<!-- PAGE 3: BULB CONTROL (dedicated interface) -->
+<div id="bulb-page" class="page">
+  <div class="bulb-section" style="background: var(--surface); margin-bottom: 1.5rem;">
+    <div class="bulb-info">
+      <div class="bulb-icon" id="dedicatedBulbIcon">💡</div>
+      <div class="bulb-label">
+        <h3>🔌 Laboratory Bulb Actuator</h3>
+        <p>State: <span id="dedicatedBulbText" class="state-off">OFF</span></p>
+        <p style="font-size:0.65rem;">Firebase realtime control / ESP32 sync</p>
+      </div>
+    </div>
+    <label class="bulb-toggle">
+      <input type="checkbox" id="dedicatedBulbToggle" onchange="toggleBulbFromPage(this.checked)"/>
+      <span class="toggle-track"></span>
+    </label>
+  </div>
+  <div style="background: #111827; border-radius: 20px; border: 1px solid var(--border); padding: 1.5rem;">
+    <h4 style="font-weight: 500; margin-bottom: 0.75rem;">⚡ Remote control instructions</h4>
+    <p style="font-size:0.85rem; color: var(--text-dim);">Toggle the switch → updates <code style="background:#00000044; padding:0.2rem 0.4rem; border-radius:6px;">/bulb_state</code> in DB. Any ESP32 or client listening will reflect changes instantly. The dashboard syncs both directions.</p>
+  </div>
+</div>
+
+<footer>
+  Department of Computing and Informatics · Live Sensor Network · Firebase Realtime Sync
+</footer>
+
+<script>
+  // ---------- FIREBASE INIT ----------
+  firebase.initializeApp({
+    apiKey:      "AIzaSyAn2n5bXJtTAQ283hMxOiR-mwl8DmXYLxY",
+    databaseURL: "https://class-app-a0548-default-rtdb.firebaseio.com/",
+    projectId:   "class-app-a0548",
+  });
+  const db = firebase.database();
+
+  // ---------- GLOBALS ----------
+  let tempChart, humChart;
+  let readingsHistory = [];   // store max 20 entries {datetime, temp, hum, localTime}
+  let lastBulbSyncFlag = false;   // avoid feedback loops
+
+  // ---------- CHART SETUP ----------
+  function initCharts() {
+    const ctxTemp = document.getElementById('tempChart').getContext('2d');
+    const ctxHum  = document.getElementById('humChart').getContext('2d');
+    tempChart = new Chart(ctxTemp, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: '°C', data: [], borderColor: '#38bdf8', backgroundColor: '#38bdf815', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#38bdf8', tension: 0.3, fill: true }] },
+      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: '#1e2d45' } }, y: { ticks: { color: '#64748b' }, grid: { color: '#1e2d45' } } } }
+    });
+    humChart = new Chart(ctxHum, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: '%', data: [], borderColor: '#34d399', backgroundColor: '#34d39915', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#34d399', tension: 0.3, fill: true }] },
+      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: '#1e2d45' } }, y: { ticks: { color: '#64748b' }, grid: { color: '#1e2d45' } } } }
+    });
+  }
+
+  function addChartPoint(chart, label, value, maxPoints = 30) {
+    chart.data.labels.push(label);
+    chart.data.datasets[0].data.push(value);
+    if (chart.data.labels.length > maxPoints) {
+      chart.data.labels.shift();
+      chart.data.datasets[0].data.shift();
+    }
+    chart.update('none');
+  }
+
+  // ---------- UPDATE UI (temp/humidity cards + chart + table) ----------
+  function updateSensorUI(data, localTimestampStr) {
+    if (!data) return;
+    const temp = parseFloat(data.temperature).toFixed(1);
+    const hum  = parseFloat(data.humidity).toFixed(0);
+    const dtRaw = data.datetime || '–';
+    const timeLabel = (dtRaw !== '–' && dtRaw.includes(' ')) ? dtRaw.split(' ')[1].substring(0,5) : new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    
+    // cards
+    document.getElementById('tempVal').innerHTML = `${temp}<span class="card-unit">°C</span>`;
+    document.getElementById('humVal').innerHTML  = `${hum}<span class="card-unit">%</span>`;
+    document.getElementById('dtVal').textContent = dtRaw;
+    document.getElementById('tempTime').innerHTML = `Last update: ${localTimestampStr}`;
+    document.getElementById('humTime').innerHTML  = `Last update: ${localTimestampStr}`;
+    
+    // charts
+    addChartPoint(tempChart, timeLabel, parseFloat(temp));
+    addChartPoint(humChart, timeLabel, parseFloat(hum));
+    
+    // store in general readings history (max 20)
+    const record = {
+      datetime: dtRaw,
+      temperature: temp,
+      humidity: hum,
+      localTime: localTimestampStr
+    };
+    readingsHistory.unshift(record);
+    if (readingsHistory.length > 20) readingsHistory.pop();
+    renderReadingsTable();
+  }
+
+  function renderReadingsTable() {
+    const tbody = document.getElementById('readingsTableBody');
+    if (!tbody) return;
+    if (readingsHistory.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Waiting for sensor data...</td></tr>';
+      return;
+    }
+    let html = '';
+    for (let rec of readingsHistory) {
+      html += `<tr>
+        <td style="font-family:monospace;">${rec.datetime || '—'}</td>
+        <td>${rec.temperature} °C</td>
+        <td>${rec.humidity} %</td>
+        <td style="font-size:0.75rem;">${rec.localTime}</td>
+      </tr>`;
+    }
+    tbody.innerHTML = html;
+  }
+
+  // ---------- BULB UI SYNC (shared across pages) ----------
+  function applyBulbUI(state, origin = 'firebase') {
+    // Update toggle on dedicated bulb page
+    const dedicatedToggle = document.getElementById('dedicatedBulbToggle');
+    if (dedicatedToggle && dedicatedToggle.checked !== state) {
+      if (origin !== 'ui') dedicatedToggle.checked = state;
+    }
+    // update preview icon + text in dashboard
+    const previewIcon = document.getElementById('previewBulbIcon');
+    const previewStateSpan = document.getElementById('previewBulbState');
+    const dedicatedIcon = document.getElementById('dedicatedBulbIcon');
+    const dedicatedText = document.getElementById('dedicatedBulbText');
+    
+    const bulbIcons = [previewIcon, dedicatedIcon];
+    bulbIcons.forEach(icon => {
+      if (icon) {
+        if (state) icon.classList.add('on');
+        else icon.classList.remove('on');
+      }
+    });
+    if (previewStateSpan) {
+      previewStateSpan.textContent = state ? 'ON' : 'OFF';
+      previewStateSpan.className = state ? 'state-on' : 'state-off';
+    }
+    if (dedicatedText) {
+      dedicatedText.textContent = state ? 'ON' : 'OFF';
+      dedicatedText.className = state ? 'state-on' : 'state-off';
+    }
+  }
+
+  // function triggered by bulb toggle on dedicated page
+  function toggleBulbFromPage(isChecked) {
+    // avoid recursive Firebase event
+    lastBulbSyncFlag = true;
+    applyBulbUI(isChecked, 'ui');
+    db.ref('/bulb_state').set(isChecked).catch(err => console.warn(err));
+    setTimeout(() => { lastBulbSyncFlag = false; }, 200);
+  }
+
+  // ---------- FIREBASE LISTENERS ----------
+  let lastUpdateTime = null;
+  
+  // Listener for environment sensor
+  db.ref('/sensors/environment').on('value', (snapshot) => {
+    const envData = snapshot.val();
+    if (!envData) return;
+    const nowLocal = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    updateSensorUI(envData, nowLocal);
+    // update status dot live
+    document.getElementById('statusDot')?.classList.add('live');
+    document.getElementById('statusText') && (document.getElementById('statusText').textContent = 'Live');
+  }, (err) => {
+    console.error(err);
+    document.getElementById('statusDot')?.classList.remove('live');
+    document.getElementById('statusText') && (document.getElementById('statusText').textContent = 'Error');
+  });
+  
+  // Listener for bulb state (syncs both directions)
+  db.ref('/bulb_state').on('value', (snap) => {
+    if (lastBulbSyncFlag) return;
+    const state = snap.val() === true;
+    applyBulbUI(state, 'firebase');
+  });
+
+  // Optional: sync initial readings also to generate initial table if any old data? but we'll start empty, but also we can load last known from db on startup?
+  // load past record to seed history: fetch last value once for initialization (optional)
+  db.ref('/sensors/environment').once('value').then(snap => {
+    const d = snap.val();
+    if (d) {
+      const initialTime = new Date().toLocaleTimeString();
+      updateSensorUI(d, initialTime);
+    }
+  }).catch(console.warn);
+  
+  // PAGE SWITCHING LOGIC
+  function switchPage(pageId) {
+    document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
+    document.getElementById(`${pageId}-page`).classList.add('active-page');
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      if (btn.getAttribute('data-page') === pageId) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+    // optional: resize charts after visibility (Chart.js auto resize)
+    if (pageId === 'dashboard' && tempChart && humChart) {
+      tempChart.resize();
+      humChart.resize();
+    }
+  }
+  
+  // attach tab event listeners
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const page = btn.getAttribute('data-page');
+      if (page) switchPage(page);
+    });
+  });
+  
+  // splash dismissal
+  function enterDashboard() {
+    document.getElementById('splash').classList.add('hidden');
+  }
+  
+  // manual call to ensure charts and other references are ready
+  window.addEventListener('DOMContentLoaded', () => {
+    initCharts();
+    // preload any initial bulb style
+    db.ref('/bulb_state').once('value').then(snap => {
+      const initialState = snap.val() === true;
+      applyBulbUI(initialState, 'init');
+    });
+    // force resize to avoid weird canvas
+    setTimeout(() => {
+      if (tempChart) tempChart.resize();
+      if (humChart) humChart.resize();
+    }, 200);
+  });
+</script>
+</body>
+</html>
